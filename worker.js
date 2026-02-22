@@ -57,10 +57,10 @@ self.addEventListener('message', async (event) => {
                     add_generation_prompt: true,
                 });
 
-                // do_sample: false = greedy decoding → clean direct answers, no echo
                 const result = await generator(formattedPrompt, {
                     max_new_tokens: 200,
-                    do_sample: false,
+                    do_sample: true,
+                    temperature: data.temperature || 0.7,
                     return_full_text: false,
                 });
 
