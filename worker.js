@@ -1,43 +1,70 @@
-import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.16.1';
+import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3';
 
 env.allowLocalModels = false;
 
-class PipelineSingleton {
-    static instance = null;
-    static currentModel = null;
+// Detect WebGPU support once at startup so we can inform the UI
+const HAS_WEBGPU = !!navigator.gpu;
 
-    static async getInstance(progress_callback = null, model_id) {
-        if (this.currentModel !== model_id) {
-            if (this.instance) {
-                console.log("Disposing old model to free memory...");
-                await this.instance.dispose();
-                this.instance = null;
-            }
-        }
+// Smart model cache: return instantly if already resident in memory.
+// Before loading a NEW model, dispose all others to free the WebAssembly /
+// WebGPU heap — browsers can't hold multiple large models simultaneously.
+const modelCache = new Map(); // model_id → pipeline instance
 
-        if (this.instance === null) {
-            this.currentModel = model_id;
-            this.instance = await pipeline('text-generation', model_id, {
-                quantized: true,
-                progress_callback,
-            });
-        }
-        return this.instance;
+async function getModel(model_id, dtype, progress_callback = null) {
+    // Fast path — model already resident in memory
+    if (modelCache.has(model_id)) return modelCache.get(model_id);
+
+    // Free all other loaded models before allocating a new one
+    for (const [id, instance] of modelCache.entries()) {
+        console.log(`Disposing ${id} to free memory before loading ${model_id}`);
+        try { await instance.dispose(); } catch (_) { }
+        modelCache.delete(id);
     }
+
+    const device = HAS_WEBGPU ? 'webgpu' : 'wasm';
+    console.log(`Loading ${model_id} on device: ${device}, dtype: ${dtype}`);
+
+    const instance = await pipeline('text-generation', model_id, {
+        device,
+        dtype,
+        progress_callback,
+    });
+    modelCache.set(model_id, instance);
+    return instance;
 }
+
+// SmolLM2 — HuggingFace's browser-first model family.
+// -ONNX suffix = public repos, no HuggingFace auth required.
+// Identical architecture, same training data. Only difference: Instruct is RLHF-tuned.
+const CHAT_MODEL = { id: 'onnx-community/SmolLM2-360M-Instruct-ONNX', dtype: 'q4' };
+const BASE_MODEL = { id: 'onnx-community/SmolLM2-360M-ONNX', dtype: 'q4' };
 
 self.addEventListener('message', async (event) => {
     const data = event.data;
-    const model_id = data.modelType === 'chat' ? 'Xenova/Qwen1.5-0.5B-Chat' : 'Xenova/Qwen1.5-0.5B';
+
+    // Announce WebGPU availability to the UI on first message
+    if (data.action === 'load') {
+        self.postMessage({ status: 'device', device: HAS_WEBGPU ? 'webgpu' : 'wasm' });
+    }
+
+    // Resolve the model config from the payload
+    const model = data.modelType === 'chat' ? CHAT_MODEL : BASE_MODEL;
+    const { id: model_id, dtype } = model;
 
     if (data.action === 'load') {
+        // Already resident — signal ready immediately
+        if (modelCache.has(model_id)) {
+            self.postMessage({ status: 'ready', cached: true });
+            return;
+        }
+
         try {
             self.postMessage({ status: 'progress', progress: 0 });
-            await PipelineSingleton.getInstance(x => {
+            await getModel(model_id, dtype, x => {
                 if (x.status === 'progress' && x.progress) {
                     self.postMessage({ status: 'progress', progress: x.progress, file: x.file });
                 }
-            }, model_id);
+            });
             self.postMessage({ status: 'ready' });
         } catch (err) {
             self.postMessage({ status: 'error', message: err.message });
@@ -47,11 +74,10 @@ self.addEventListener('message', async (event) => {
         self.postMessage({ status: 'start' });
 
         try {
-            const generator = await PipelineSingleton.getInstance(null, model_id);
+            const generator = await getModel(model_id, dtype);
 
             if (data.modelType === 'chat') {
-                // Format the messages array using the tokenizer's chat template
-                // (exactly as the model was trained to expect)
+                // Format messages using the tokenizer's chat template
                 const formattedPrompt = generator.tokenizer.apply_chat_template(data.messages, {
                     tokenize: false,
                     add_generation_prompt: true,
@@ -66,8 +92,7 @@ self.addEventListener('message', async (event) => {
 
                 const assistantReply = (() => {
                     let raw = (result[0].generated_text || '').trim();
-                    // This small model tends to echo the full conversation before the answer.
-                    // Strip everything up to and including the last 'assistant' keyword.
+                    // Strip any echoed conversation prefix the model may emit
                     const idx = raw.lastIndexOf('\nassistant');
                     if (idx !== -1) return raw.slice(idx + '\nassistant'.length).trim();
                     const idx2 = raw.lastIndexOf('assistant');
@@ -79,7 +104,7 @@ self.addEventListener('message', async (event) => {
             } else {
                 // Base model: stream token by token
                 const input = data.text;
-                let generatedSoFar = "";
+                let generatedSoFar = '';
 
                 const result = await generator(input, {
                     max_new_tokens: 200,

@@ -126,11 +126,14 @@ let worker = null;
 
 function setupWorker() {
     if (worker) worker.terminate();
-    worker = new Worker('worker.js?v=2', { type: 'module' });
+    worker = new Worker('worker.js?v=3', { type: 'module' });
 
     worker.addEventListener('message', (e) => {
         const data = e.data;
         switch (data.status) {
+            case 'device':
+                loadingText.innerText = `Loading Model… using ${data.device === 'webgpu' ? '⚡ WebGPU' : 'WASM'}`;
+                break;
             case 'progress':
                 if (data.progress) {
                     progressBar.style.width = `${Math.round(data.progress)}%`;
@@ -138,7 +141,9 @@ function setupWorker() {
                 }
                 break;
             case 'ready':
+                // Worker signals cached models instantly — skip the overlay flash
                 loadingOverlay.classList.add('hidden');
+                progressBar.style.width = '100%';
                 setUIDisabled(false);
                 break;
             case 'start':

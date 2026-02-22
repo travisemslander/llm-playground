@@ -149,6 +149,15 @@ input:checked+.slider:before {
     color: #f8fafc;
 }
 
+.model-settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
 .advanced-settings {
     display: flex;
     flex-direction: column;
@@ -352,6 +361,66 @@ main {
 
 .msg-card--assistant textarea {
     color: #a7f3d0;
+}
+
+/* ─── Chat model size bar ───────────────────────────────────────────────────── */
+.chat-model-size-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.chat-model-size-bar.hidden {
+    display: none;
+}
+
+.chat-model-size-label {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    white-space: nowrap;
+}
+
+.chat-model-size-pills {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.size-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    padding: 0.3rem 0.85rem;
+    color: #64748b;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+.size-pill:hover {
+    background: rgba(139, 92, 246, 0.08);
+    border-color: rgba(139, 92, 246, 0.3);
+    color: #c4b5fd;
+}
+
+.size-pill.active {
+    background: rgba(139, 92, 246, 0.18);
+    border-color: rgba(139, 92, 246, 0.6);
+    color: #e9d5ff;
+    box-shadow: 0 0 12px rgba(139, 92, 246, 0.2);
+}
+
+.pill-tag {
+    font-size: 0.68rem;
+    font-weight: 400;
+    opacity: 0.7;
 }
 
 /* ─── Chat toolbar ──────────────────────────────────────────────────────────── */
