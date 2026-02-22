@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base vs Chat LLM Comparison</title>
+    <link rel="stylesheet" href="styles.css?v=2">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <header>
+            <h1>LLM Playground</h1>
+            <p class="subtitle">Experience the difference between Pre-trained (Base) and RLHF (Chat) Models</p>
+        </header>
+
+        <main>
+            <div class="controls-panel glass-panel">
+                <div class="toggle-container">
+                    <span class="toggle-label" id="label-base">Base Model</span>
+                    <label class="switch">
+                        <input type="checkbox" id="model-toggle">
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="toggle-label active" id="label-chat">Chat Model</span>
+                </div>
+                <div class="model-info">
+                    <p id="model-description">
+                        <strong>Chat Model (RLHF):</strong> Tuned to act as a helpful assistant. It answers questions,
+                        follows instructions, and maintains a conversational tone.
+                    </p>
+                </div>
+                <div class="advanced-settings">
+                    <label for="temperature-slider">Temperature: <span id="temp-val">0.7</span></label>
+                    <input type="range" id="temperature-slider" min="0.1" max="1.5" step="0.1" value="0.7">
+                </div>
+            </div>
+
+            <!-- Loading Overlay shared between views -->
+            <!-- It needs to be positioned over the active view -->
+
+            <!-- BASE MODEL VIEW -->
+            <div id="base-view" class="view-panel glass-panel hidden">
+                <div class="base-output-area">
+                    <div id="base-history-container" class="output-container">
+                        <div class="message system-message" id="base-placeholder">
+                            Type a starting text below to see how the model continues it. Submitting again will clear
+                            the previous outcome.
+                        </div>
+                        <div id="base-text-content" class="hidden">
+                            <span id="base-prompt-echo" class="prompt-echo"></span><span id="base-generated-text"
+                                class="generated-text"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="input-area">
+                    <textarea id="base-prompt-input" rows="3"
+                        placeholder="Type your starting text here... (e.g., 'The capital of France is ')"></textarea>
+                    <button id="base-generate-btn" class="primary-btn">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2.01 21L23 12L2.01 3L2 10l15 2-15 2z" fill="currentColor" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- CHAT MODEL VIEW -->
+            <div id="chat-view" class="view-panel glass-panel">
+                <div id="chat-messages-list" class="chat-messages-list"></div>
+                <div class="chat-toolbar">
+                    <button id="chat-add-user-btn" class="add-msg-btn">+ Add User Message</button>
+                    <button id="chat-generate-btn" class="submit-btn">Generate</button>
+                </div>
+            </div>
+
+            <div id="loading-overlay" class="loading-overlay hidden">
+                <div class="spinner"></div>
+                <p id="loading-text">Loading Model... (This may take a minute)</p>
+                <div class="progress-bar-container">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script type="module" src="app.js?v=2"></script>
+</body>
+
+</html>
