@@ -119,8 +119,8 @@ chatAddUserBtn.addEventListener('click', () => {
 });
 
 // ── Model toggle ───────────────────────────────────────────────────────────────
-let isChatModel = true;
-toggle.checked = true;
+let isChatModel = false;
+toggle.checked = false;
 
 let worker = null;
 
