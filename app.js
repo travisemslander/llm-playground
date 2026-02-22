@@ -205,7 +205,7 @@ function updateView() {
         labelBase.classList.remove('active');
         chatView.classList.remove('hidden');
         baseView.classList.add('hidden');
-        modelDescription.innerHTML = `<strong>Chat Model (RLHF):</strong> Tuned to act as a helpful assistant. It answers questions, follows instructions, and maintains a conversational tone.`;
+        modelDescription.innerHTML = `<strong>Chat Model (Post-trained):</strong> Tuned to act as a helpful assistant. It answers questions, follows instructions, and maintains a conversational tone.`;
         renderMessages();
     } else {
         labelBase.classList.add('active');

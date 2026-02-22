@@ -35,7 +35,7 @@ async function getModel(model_id, dtype, progress_callback = null) {
 
 // SmolLM2 — HuggingFace's browser-first model family.
 // -ONNX suffix = public repos, no HuggingFace auth required.
-// Identical architecture, same training data. Only difference: Instruct is RLHF-tuned.
+// Identical architecture, same training data. Only difference: Instruct is post-trained.
 const CHAT_MODEL = { id: 'onnx-community/SmolLM2-360M-Instruct-ONNX', dtype: 'q4' };
 const BASE_MODEL = { id: 'onnx-community/SmolLM2-360M-ONNX', dtype: 'q4' };
 
